@@ -1,108 +1,110 @@
 import json
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List, Dict, Optional
 
 DATA_FILE = "students.json"
 
 app = FastAPI()
 
 
-class Student:
-    def __init__(self, name, subject_scores):
-        self.name = name
-        self.subject_scores = subject_scores
-        self.average = self.calculate_average()
-        self.grade = self.calculate_grade()
+class StudentResult(BaseModel):
+    name: str
+    scores: Dict[str, float]
 
-    def calculate_average(self):
-        if not self.subject_scores:
-            return 0
-        return sum(self.subject_scores) / len(self.subject_scores)
 
-    def calculate_grade(self):
-        avg = self.average
-        if avg >= 80:
+class Student(BaseModel):
+    name: str
+    scores: Dict[str, float]
+    average: float
+    grade: str
+
+    @staticmethod
+    def calculate_average(scores: Dict[str, float]) -> float:
+        if not scores:
+            return 0.0
+        return sum(scores.values()) / len(scores)
+
+    @staticmethod
+    def calculate_grade(average: float) -> str:
+        if average >= 80:
             return "A"
-        elif avg >= 70:
+        elif average >= 70:
             return "B+"
-        elif avg >= 60:
+        elif average >= 60:
             return "B"
-        elif avg >= 55:
+        elif average >= 55:
             return "C+"
-        elif avg >= 50:
+        elif average >= 50:
             return "C"
-        elif avg >= 45:
+        elif average >= 45:
             return "D+"
-        elif avg >= 40:
+        elif average >= 40:
             return "D"
         else:
             return "F"
 
-    def to_dict(self):
-        return {
-            "name": self.name,
-            "subjects": self.subjects,
-            "scores": self.scores,
-            "average": self.average,
-            "grade": self.grade,
-        }
+    @classmethod
+    def from_result(cls, result: StudentResult):
+        avg = cls.calculate_average(result.scores)
+        grade = cls.calculate_grade(avg)
+        return cls(name=result.name, scores=result.scores, average=avg, grade=grade)
 
 
-def save_students(students):
-    with open(DATA_FILE, "w") as f:
-        json.dump([s.to_dict() for s in students], f)
+# Save student data to JSON file
+def save_students(students: List[Student]):
+    with open(DATA_FILE, "w") as file:
+        json.dump([student.dict() for student in students], file, indent=2)
+
+# Load student data from JSON
 
 
-def load_students():
+def load_students() -> List[Student]:
     if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-            return [Student.from_dict(d) for d in data]
+        with open(DATA_FILE, "r") as file:
+            content = file.read().strip()
+            if not content:
+                return []
+            try:
+                data = json.loads(content)
+                return [Student(**d) for d in data]
+            except json.JSONDecodeError:
+                # Optionally, log or handle the error
+                return []
     return []
 
 
-@app.post("/students")
-def add_student():
+@app.post("/students/", response_model=Student)
+def add_student(stud: StudentResult):
     students = load_students()
-    name = input("Enter the student name: ")
-    subjects = input(f"Enter {name}'s subjects (comma separated): ").split(",")
-    subjects = [s.strip() for s in subjects]
-    scores = []
-    for subject in subjects:
-        while True:
-            try:
-                score = float(input(f"Score for {subject}: "))
-                break
-            except:
-                print("Invalid score.")
-        scores.append(score)
-    student = Student(name, subjects, scores)
+    for s in students:
+        if s.name.lower() == stud.name.lower():
+            raise HTTPException(
+                status_code=400, detail="Student already exists"
+            )
+    student = Student.from_result(stud)
     students.append(student)
-    print("Student added.")
+    save_students(students)
+    return student
+
+# Get specific student data
 
 
-@app.get("/students/{name}")
-def view_student(name):
+@app.get("/students/{name}", response_model=Student)
+def view_student(name: str):
     students = load_students()
-    if not students:
-        print("There are no students yet.")
     for s in students:
         if s.name.lower() == name.lower():
-            print(f"\nStudent Name is {s.name}")
-            for subj, score in zip(s.subjects, s.scores):
-                print(f"\n{subj}: {score}")
-            print(f"\nAverage: {s.average:.2f}, Grade: {s.grade}")
-            return
-    print("The student is not found.")
+            return s
+    raise HTTPException(status_code=404, detail="Student not found")
+
+# Get all Students
 
 
-@app.get("/students")
+@app.get("/students", response_model=List[Student])
 def view_students():
     students = load_students()
     if not students:
-        print("There are no students yet.")
-    for s in students:
-        print(f"\nStudent Name is {s.name}")
-        for subj, score in zip(s.subjects, s.scores):
-            print(f"\n{subj}: {score}")
-        print(f"\nAverage: {s.average:.2f}, Grade: {s.grade}")
+        raise HTTPException(status_code=404, detail="There are no students")
+    return students
