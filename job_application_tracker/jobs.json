@@ -1,0 +1,12 @@
+[
+  {"job_id": 1, "name": "Backend Developer", "company": "TechNova", "position": "Backend Developer", "posted_date": "2024-06-10"},
+  {"job_id": 2, "name": "Frontend Engineer", "company": "Webify", "position": "Frontend Engineer", "posted_date": "2024-06-09"},
+  {"job_id": 3, "name": "DevOps Specialist", "company": "CloudOps", "position": "DevOps Specialist", "posted_date": "2024-06-08"},
+  {"job_id": 4, "name": "Data Scientist", "company": "DataMinds", "position": "Data Scientist", "posted_date": "2024-06-07"},
+  {"job_id": 5, "name": "QA Automation", "company": "TestLab", "position": "QA Automation Engineer", "posted_date": "2025-06-06"},
+  {"job_id": 6, "name": "Mobile App Developer", "company": "Appify", "position": "Mobile App Developer", "posted_date": "2025-06-05"},
+  {"job_id": 7, "name": "UI/UX Designer", "company": "DesignHub", "position": "UI/UX Designer", "posted_date": "2025-06-04"},
+  {"job_id": 8, "name": "Machine Learning Engineer", "company": "AIMinds", "position": "Machine Learning Engineer", "posted_date": "2025-06-03"},
+  {"job_id": 9, "name": "Cloud Architect", "company": "SkyNet", "position": "Cloud Architect", "posted_date": "2025-06-02"},
+  {"job_id": 10, "name": "Cybersecurity Analyst", "company": "SecureIT", "position": "Cybersecurity Analyst", "posted_date": "2025-06-01"}
+]
