@@ -2,7 +2,7 @@ import json
 import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 DATA_FILE = "students.json"
 
@@ -16,7 +16,7 @@ class StudentResult(BaseModel):
 
 class Student(BaseModel):
     name: str
-    scores: Dict[str, float]
+    subject_scores: Dict[str, float]
     average: float
     grade: str
 
@@ -49,13 +49,14 @@ class Student(BaseModel):
     def from_result(cls, result: StudentResult):
         avg = cls.calculate_average(result.scores)
         grade = cls.calculate_grade(avg)
-        return cls(name=result.name, scores=result.scores, average=avg, grade=grade)
+        return cls(name=result.name, subject_scores=result.scores, average=avg, grade=grade)
 
 
 # Save student data to JSON file
 def save_students(students: List[Student]):
     with open(DATA_FILE, "w") as file:
-        json.dump([student.dict() for student in students], file, indent=2)
+        json.dump([student.model_dump()
+                  for student in students], file, indent=2)
 
 # Load student data from JSON
 
@@ -70,7 +71,6 @@ def load_students() -> List[Student]:
                 data = json.loads(content)
                 return [Student(**d) for d in data]
             except json.JSONDecodeError:
-                # Optionally, log or handle the error
                 return []
     return []
 
@@ -102,7 +102,7 @@ def view_student(name: str):
 # Get all Students
 
 
-@app.get("/students", response_model=List[Student])
+@app.get("/students/", response_model=List[Student])
 def view_students():
     students = load_students()
     if not students:
