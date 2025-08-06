@@ -26,7 +26,7 @@ This repository contains five distinct FastAPI applications, each addressing dif
 
 ```bash
 git clone <repository-url>
-cd fastapi_based_apis
+cd FastAPI-MultiProject
 ```
 
 2. Install dependencies for any specific API:
